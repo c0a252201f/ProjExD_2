@@ -50,7 +50,7 @@ def gameover(screen: pg.Surface) -> None: #ゲームオーバー画面
     time.sleep(5)
     
 
-def init_bb_imgs() -> tuple[list[pg.Surface], list[int]]:
+def init_bb_imgs() -> tuple[list[pg.Surface], list[int]]:#時間とともに爆弾が拡大、加速する
     """爆弾の大きさ10段階のSurfaceリストと加速度リストを返す"""
     bb_imgs = []
     bb_accs = [a for a in range(1, 11)]  # 加速度 1〜10
@@ -62,6 +62,25 @@ def init_bb_imgs() -> tuple[list[pg.Surface], list[int]]:
         bb_imgs.append(bb_img)
 
     return bb_imgs, bb_accs
+
+
+def get_kk_imgs() -> dict[tuple[int, int], pg.Surface]:
+    base_img = pg.image.load("fig/3.png")
+    base_flipped_img = pg.transform.flip(base_img,True,False)
+
+    kk_imgs = {
+        (0, 0):   pg.transform.rotozoom(base_img,   0, 0.9),   # 停止
+        (+5, 0):  pg.transform.rotozoom(base_flipped_img,   0, 0.9),   # 右
+        (+5, -5): pg.transform.rotozoom(base_flipped_img, 45, 0.9),   # 右上
+        (0, -5):  pg.transform.rotozoom(base_img,  -90, 0.9),   # 上
+        (-5, -5): pg.transform.rotozoom(base_img, -45, 0.9),   # 左上
+        (-5, 0):  pg.transform.rotozoom(base_img, 0, 0.9),   # 左
+        (-5, +5): pg.transform.rotozoom(base_img, 45, 0.9),   # 左下
+        (0, +5):  pg.transform.rotozoom(base_img, 90, 0.9),   # 下
+        (+5, +5): pg.transform.rotozoom(base_flipped_img,  -45, 0.9),   # 右下
+    }
+
+    return kk_imgs
 
 
 
@@ -85,10 +104,12 @@ def main():
     clock = pg.time.Clock()
     tmr = 0
     bb_imgs, bb_accs = init_bb_imgs()#爆弾加速
+    kk_imgs = get_kk_imgs()#こうかとん画像切り替え辞書
     while True:
         for event in pg.event.get():
             if event.type == pg.QUIT: 
                 return
+        
         if kk_rct.colliderect(bb_rct):
             print("ゲームオーバー")
             
@@ -97,6 +118,8 @@ def main():
         if kk_rct.colliderect(bb_rct):
             gameover(screen)
             return
+        
+   
 
         key_lst = pg.key.get_pressed()
         sum_mv = [0, 0]
@@ -124,7 +147,9 @@ def main():
         avx = vx * acc                 # 加速した速度
         avy = vy * acc
         bb_rct.move_ip(avx, avy)
-
+        
+        kk_img = kk_imgs[tuple(sum_mv)]#こうかとん画像切り替え
+        
         bb_rct.move_ip(vx, vy)
         yoko, tate = check_bound(bb_rct)
         if not yoko:
