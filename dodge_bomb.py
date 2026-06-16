@@ -83,6 +83,38 @@ def get_kk_imgs() -> dict[tuple[int, int], pg.Surface]:
     return kk_imgs
 
 
+import math
+import pygame as pg
+
+def calc_orientation(org: pg.Rect, dst: pg.Rect,current_xy: tuple[float, float]) -> tuple[float, float]:
+    """
+    org: 爆弾の Rect
+    dst: こうかとんの Rect
+    current_xy: 前フレームの (vx, vy)
+    return: 新しい (vx, vy)
+    """
+
+    # --- 差ベクトル（こうかとん - 爆弾） ---
+    dx = dst.centerx - org.centerx
+    dy = dst.centery - org.centery
+
+    # --- 距離（ノルム） ---
+    dist = math.sqrt(dx*dx + dy*dy)
+
+    # --- 慣性処理：距離が 300 未満なら current_xy を返す ---
+    if dist < 300:
+        return current_xy
+
+    if dist != 0:
+        scale = math.sqrt(10) / dist
+        vx = dx * scale
+        vy = dy * scale
+    else:
+        # 万が一同じ位置にいる場合は動かさない
+        vx, vy = 0, 0
+
+    return (vx, vy)
+
 
 def main():
     pg.display.set_caption("逃げろ！こうかとん")
@@ -160,6 +192,8 @@ def main():
         pg.display.update()
         tmr += 1
         clock.tick(50)
+        vx, vy = calc_orientation(bb_rct, kk_rct, (vx, vy))
+        bb_rct.move_ip(vx, vy)
 
 
 if __name__ == "__main__":
